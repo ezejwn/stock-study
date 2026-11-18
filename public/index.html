@@ -1,0 +1,24 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>주식 공부 노트</title>
+  <link rel="preconnect" href="https://cdn.jsdelivr.net" />
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/variable/pretendardvariable-dynamic-subset.min.css" />
+  <link rel="stylesheet" href="/style.css" />
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'><rect width='32' height='32' rx='8' fill='%23111827'/><path d='M7 22l6-7 5 4 7-9' stroke='%2334d399' stroke-width='3' fill='none' stroke-linecap='round' stroke-linejoin='round'/></svg>" />
+</head>
+<body>
+  <header class="topbar">
+    <a href="#/" class="brand">주식 공부 노트</a>
+    <form id="addForm" class="search" autocomplete="off">
+      <input id="searchInput" type="search" placeholder="종목명 또는 코드 (예: 삼성전자, 005930)" aria-label="종목 검색" />
+      <ul id="suggest" class="suggest" hidden></ul>
+    </form>
+  </header>
+  <main id="app"></main>
+  <footer class="foot">데이터: DART 전자공시 · 네이버 증권 · 네이버 뉴스. 공부용 자료이며 투자 권유가 아닙니다.</footer>
+  <script type="module" src="/app.js"></script>
+</body>
+</html>

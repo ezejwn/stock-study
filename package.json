@@ -1,0 +1,14 @@
+{
+  "name": "stock-study",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "description": "종목을 장기가치·성장·배당으로 분류하고 5가지 기준·DART 공시·네이버 뉴스를 보여주는 주식 공부 사이트",
+  "scripts": {
+    "test": "node test/run.mjs"
+  },
+  "dependencies": {
+    "@netlify/blobs": "^8.1.0",
+    "fflate": "^0.8.2"
+  }
+}
