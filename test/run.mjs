@@ -1,5 +1,5 @@
 // 모의 데이터로 API 함수 전체 흐름 검증: node test/run.mjs
-import "./mock.mjs";
+import { kisState } from "./mock.mjs";
 import search from "../netlify/functions/search.mjs";
 import stock from "../netlify/functions/stock.mjs";
 import disclosures from "../netlify/functions/disclosures.mjs";
@@ -29,6 +29,26 @@ for (const [code, cat] of Object.entries(expected)) {
   assert.equal(b.warnings.length, 0);
   assert.ok(r.headers.get("netlify-cdn-cache-control"));
 }
+// 한국투자증권: 값 우선 적용 · 토큰 재사용 · 만료 시 재발급 · 실패 시 네이버 대체
+const k1 = (await call(stock, "/api/stock?code=005930&fresh=1")).body;
+const val = k1.sections.find((x) => x.key === "valuation").points;
+assert.match(val.find((p) => p.label === "현재가").value, /^100,100원/);
+assert.match(val.find((p) => p.label === "현재가").note, /한국투자증권 \+ 네이버 증권/);
+assert.equal(val.find((p) => p.label.startsWith("추정")).value, "11.2배", "추정PER은 네이버에서");
+assert.equal(k1.sections[0].points[0].value, "전기·전자");
+assert.equal(kisState.tokenCalls, 1, "토큰은 한 번만 발급");
+kisState.expireNext = true;
+await call(stock, "/api/stock?code=005930&fresh=2");
+assert.equal(kisState.tokenCalls, 2, "만료 시 재발급");
+kisState.failCodes = ["005930"];
+const k3 = (await call(stock, "/api/stock?code=005930&fresh=3")).body;
+assert.match(k3.sections.find((x) => x.key === "valuation").points[0].value, /^99,800원/);
+assert.match(k3.warnings[0], /한국투자증권.*네이버 증권 값으로 대체/);
+kisState.failCodes = [];
+const { parseKisPrice } = await import("../lib/kis.mjs");
+assert.throws(() => parseKisPrice({ stck_prpr: "0" }), /현재가 없음/);
+assert.equal(parseKisPrice({ stck_prpr: "1000", per: "0.00" }).per, null, "PER 0은 값 없음");
+console.log("한국투자증권 연동 검사 통과 · 경고 예:", k3.warnings[0]);
 assert.equal((await call(stock, "/api/stock?code=abc")).status, 400);
 assert.equal((await call(stock, "/api/stock?code=000000")).status, 404);
 

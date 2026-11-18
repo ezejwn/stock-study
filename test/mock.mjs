@@ -4,6 +4,9 @@ import { zipSync, strToU8 } from "fflate";
 process.env.DART_API_KEY = "test";
 process.env.NAVER_CLIENT_ID = "id";
 process.env.NAVER_CLIENT_SECRET = "secret";
+process.env.KIS_APP_KEY = "kis-key";
+process.env.KIS_APP_SECRET = "kis-secret";
+export const kisState = { tokenCalls: 0, expireNext: false, failCodes: [] };
 
 const CORP_XML = `<?xml version="1.0" encoding="UTF-8"?><result>
 <list><corp_code>00126380</corp_code><corp_name>삼성전자</corp_name><corp_eng_name>SAMSUNG</corp_eng_name><stock_code>005930</stock_code><modify_date>20250101</modify_date></list>
@@ -106,9 +109,26 @@ export const calls = [];
 
 globalThis.fetch = async (url, opts) => {
   const u = new URL(String(url));
-  if (!/opendart|naver\.com/.test(u.host)) return realFetch(url, opts);
+  if (!/opendart|naver\.com|koreainvestment/.test(u.host)) return realFetch(url, opts);
   calls.push(u.pathname);
   const p = Object.fromEntries(u.searchParams);
+  if (u.host.includes("koreainvestment")) {
+    if (u.pathname === "/oauth2/tokenP") {
+      const b = JSON.parse(opts.body);
+      if (b.appkey !== "kis-key") return new Response(JSON.stringify({ error_description: "유효하지 않은 AppKey" }), { status: 403 });
+      kisState.tokenCalls++;
+      return ok({ access_token: `tok${kisState.tokenCalls}`, token_type: "Bearer", expires_in: 86400 });
+    }
+    const h = opts.headers;
+    if (kisState.expireNext) { kisState.expireNext = false; return new Response(JSON.stringify({ rt_cd: "1", msg_cd: "EGW00123", msg1: "기간이 만료된 token 입니다." }), { status: 500 }); }
+    if (!h.authorization?.startsWith("Bearer tok") || h.tr_id !== "FHKST01010100") return ok({ rt_cd: "1", msg1: "bad header" });
+    if (kisState.failCodes.includes(p.FID_INPUT_ISCD)) return ok({ rt_cd: "1", msg_cd: "EGW00201", msg1: "초당 거래건수를 초과하였습니다." });
+    const K = { "005930": { stck_prpr: "100100", prdy_vrss: "2000", prdy_ctrt: "2.04", per: "18.50", pbr: "1.63", hts_avls: "5925000", w52_hgpr: "105000", w52_lwpr: "53000", rprs_mrkt_kor_name: "KOSPI200", bstp_kor_isnm: "전기·전자" },
+      "196170": { stck_prpr: "398000", prdy_vrss: "-8500", prdy_ctrt: "-2.10", per: "95.10", pbr: "18.20", hts_avls: "213000", w52_hgpr: "450000", w52_lwpr: "180000", rprs_mrkt_kor_name: "KOSDAQ", bstp_kor_isnm: "제약" },
+      "105560": { stck_prpr: "95000", prdy_vrss: "300", prdy_ctrt: "0.32", per: "6.80", pbr: "0.58", hts_avls: "381000", w52_hgpr: "102000", w52_lwpr: "70000", rprs_mrkt_kor_name: "KOSPI200", bstp_kor_isnm: "금융" },
+      "000001": { stck_prpr: "0", per: "0.00" } };
+    return ok({ rt_cd: "0", msg1: "정상처리 되었습니다.", output: K[p.FID_INPUT_ISCD] || { stck_prpr: "0", per: "0.00" } });
+  }
   if (u.pathname.endsWith("corpCode.xml")) return new Response(zipSync({ "CORPCODE.xml": strToU8(CORP_XML) }));
   if (u.pathname.endsWith("company.json")) return ok({ status: "000", ...COMPANY[p.corp_code] });
   if (u.pathname.endsWith("fnlttSinglAcntAll.json")) {
