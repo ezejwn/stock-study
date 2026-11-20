@@ -6,7 +6,11 @@ const NAMES = ["DART_API_KEY", "NAVER_CLIENT_ID", "NAVER_CLIENT_SECRET", "KIS_AP
 
 export default async () => {
   const env = Object.fromEntries(NAMES.map((n) => [n, !!(process.env[n] ?? globalThis.Netlify?.env?.get?.(n))]));
-  return json({ env, corpListBundled: bundledCorps.length, time: new Date().toISOString() });
+  // 이름이 비슷한 변수(오타·공백 진단용) — 값은 절대 표시하지 않음
+  const similar = Object.keys(process.env)
+    .filter((k) => /naver|kis|dart|client|app_?key|secret/i.test(k) && !NAMES.includes(k))
+    .map((k) => JSON.stringify(k));
+  return json({ env, similarNames: similar, corpListBundled: bundledCorps.length, time: new Date().toISOString() });
 };
 
 export const config = { path: "/api/health" };
