@@ -19,6 +19,12 @@ for (const [code, cat] of Object.entries(expected)) {
   const b = r.body;
   console.log(`\n=== ${b.name} (${code}) → ${b.category.label}  scores=${JSON.stringify(b.category.scores)}`);
   console.log("  이유:", b.category.reasons.join(" / "));
+  const v = b.verdict;
+  console.log(`  ▶ 판단: [${v.label}] ${v.text}`);
+  console.log("    등급:", Object.values(v.grades).map((g) => `${g.desc}=${g.grade}`).join(", "));
+  console.log("    강점:", v.strengths.join(" | "));
+  console.log("    약점:", v.weaknesses.join(" | "));
+  console.log("    틀릴 수 있는 경우:", v.wrongIf.join(" | "));
   if (b.warnings.length) console.log("  경고:", b.warnings);
   for (const sec of b.sections) {
     console.log(`  [${sec.no}] ${sec.title}: ${sec.summary}`);
@@ -26,6 +32,7 @@ for (const [code, cat] of Object.entries(expected)) {
   }
   console.log("  촉매:", b.catalysts.map((x) => x.title), " 리스크:", b.risks.map((x) => x.title));
   assert.equal(b.category.auto, cat, `${code} 분류`);
+  assert.ok(v.label && v.text && v.checklist.length === 3);
   assert.equal(b.warnings.length, 0);
   assert.ok(r.headers.get("netlify-cdn-cache-control"));
 }

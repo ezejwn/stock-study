@@ -47,6 +47,22 @@ function priceHtml(price, rate) {
 const maxRcept = (list) => (list || []).reduce((m, d) => (d.rceptNo > m ? d.rceptNo : m), "");
 
 // ---------- 검색 · 추가 ----------
+// 배포 때 만든 상장사 목록(/corps.json)으로 브라우저에서 바로 검색, 없으면 서버 검색
+let corpsPromise = null;
+async function searchCorps(q) {
+  corpsPromise ??= fetch("/corps.json").then((r) => (r.ok ? r.json() : [])).catch(() => []);
+  const corps = await corpsPromise;
+  if (!corps.length) return (await api(`/api/search?q=${encodeURIComponent(q)}`)).results;
+  const s = q.toLowerCase().replace(/\s/g, "");
+  const exact = [], starts = [], contains = [];
+  for (const [name, code] of corps) {
+    const n = name.toLowerCase().replace(/\s/g, "");
+    if (code === s || n === s) exact.push({ name, code });
+    else if (n.startsWith(s) || code.startsWith(s)) starts.push({ name, code });
+    else if (n.includes(s)) contains.push({ name, code });
+  }
+  return [...exact, ...starts, ...contains].slice(0, 10);
+}
 const input = $("#searchInput");
 const suggest = $("#suggest");
 let suggestItems = [];
@@ -58,7 +74,7 @@ input.addEventListener("input", () => {
   if (!q) { suggest.hidden = true; return; }
   timer = setTimeout(async () => {
     try {
-      const { results } = await api(`/api/search?q=${encodeURIComponent(q)}`);
+      const results = await searchCorps(q);
       suggestItems = results;
       active = results.length ? 0 : -1;
       drawSuggest();
@@ -110,6 +126,8 @@ function applySummary(s, data) {
   const val = data.sections.find((x) => x.key === "valuation");
   const priceP = val?.points.find((p) => p.label === "현재가");
   s.priceText = priceP?.value || null;
+  s.verdictLabel = data.verdict?.label || null;
+  s.verdictTone = data.verdict?.tone || null;
   s.summaryAt = Date.now();
   if (!s.lastSeen) s.lastSeen = maxRcept(data.disclosures);
   save();
@@ -167,6 +185,7 @@ function cardHtml(s) {
     <div class="nm">${esc(s.name)}${s.newCount ? `<span class="newbadge">새 공시 ${s.newCount}</span>` : ""}</div>
     <div class="cd">${s.code}</div>
     <div style="margin-top:8px">${c ? `<span class="badge ${c}">${CAT[c]}${s.override ? " · 직접" : ""}</span>` : '<span class="chip">분석 중…</span>'}</div>
+    ${s.verdictLabel ? `<div class="vlabel ${s.verdictTone}">판단: ${esc(s.verdictLabel)}</div>` : ""}
     <div class="px">${s.priceText ? esc(s.priceText) : ""}</div>
   </a>`;
 }
@@ -208,7 +227,7 @@ async function renderDetail(code, fresh = false) {
   try {
     data = await refreshSummary(s, fresh);
   } catch (e) {
-    app.innerHTML = `<a class="back" href="#/">← 목록</a><div class="warn-box">불러오지 못했습니다: ${esc(e.message)}</div>`;
+    app.innerHTML = `<a class="back" href="#/">← 목록</a><div class="warn-box">불러오지 못했습니다: ${esc(e.message)}<br>설정 점검: <a href="/api/health" target="_blank">/api/health</a> 에서 키가 모두 true 인지 확인하세요.</div>`;
     return;
   }
   if (currentCode !== code) return;
@@ -233,6 +252,7 @@ async function renderDetail(code, fresh = false) {
         ${data.category.reasons.map((r) => `<span class="chip">${esc(r)}</span>`).join("")}
       </div>
     </section>
+    ${verdictHtml(data.verdict, catOf(s))}
     <div class="legend"><span><i class="dot good"></i>양호</span><span><i class="dot warn"></i>체크</span><span><i class="dot bad"></i>주의</span><span><i class="dot"></i>참고</span></div>
     <div class="sections">
       ${data.sections.filter((x) => x.key !== "catalyst").map(sectionHtml).join("")}
@@ -259,6 +279,8 @@ async function renderDetail(code, fresh = false) {
     const k = catOf(s);
     b.className = `badge ${k}`;
     b.textContent = CAT[k];
+    const cl = $("#checklist");
+    if (cl) cl.innerHTML = data.verdict.checklists[k].map((x) => `<li>${esc(x)}</li>`).join("");
   });
   let memoT;
   const saveMemo = () => {
@@ -279,6 +301,26 @@ async function renderDetail(code, fresh = false) {
   feedTimer = setInterval(() => { if (document.visibilityState === "visible") loadFeeds(code, true); }, FEED_REFRESH_MS);
 }
 let detailCtx = null;
+
+const GRADE_TONE = { 상: "good", 중: "neutral", 하: "bad", 쌈: "good", 적정: "neutral", 비쌈: "bad", 양호: "good", 체크: "warn", 주의: "bad" };
+function verdictHtml(v, cat) {
+  if (!v) return "";
+  const li = (arr, empty) => (arr.length ? arr.map((x) => `<li>${esc(x)}</li>`).join("") : `<li class="d">${empty}</li>`);
+  return `<section class="verdict ${v.tone}">
+    <div class="v-head"><span class="v-k">종합 판단</span><span class="v-label">${esc(v.label)}</span></div>
+    <p class="v-text">${esc(v.text)}</p>
+    <div class="grades">${Object.values(v.grades).map((g) => `<div class="grade"><span>${esc(g.desc)}</span><b class="${GRADE_TONE[g.grade] || "neutral"}">${esc(g.grade)}</b></div>`).join("")}</div>
+    <div class="v-cols">
+      <div><h3 class="c">강점</h3><ul>${li(v.strengths, "뚜렷한 강점 없음")}</ul></div>
+      <div><h3 class="r">약점</h3><ul>${li(v.weaknesses, "뚜렷한 약점 없음")}</ul></div>
+    </div>
+    <div class="v-cols">
+      <div><h3>사기 전에 확인할 것</h3><ol id="checklist">${li(v.checklists[cat] || v.checklist, "")}</ol></div>
+      <div><h3>이 판단이 틀릴 수 있는 경우</h3><ul>${li(v.wrongIf, "-")}</ul></div>
+    </div>
+    <p class="v-note">회사 체력 × 가격 조합으로 지표를 자동 해석한 결과예요. 업종 특성은 반영하지 못하니, 판단의 출발점으로 쓰세요. 투자 권유가 아닙니다.</p>
+  </section>`;
+}
 
 function sectionHtml(sec) {
   return `<section class="sec">

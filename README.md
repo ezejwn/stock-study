@@ -9,7 +9,9 @@
    - 네이버: https://developers.naver.com → Application 등록 → 사용 API에서 **검색** 선택 → Client ID / Client Secret 확인
    - 한국투자증권(선택): https://apiportal.koreainvestment.com → KIS Developers 서비스 신청 → **실전투자** App Key / App Secret 확인 (한국투자증권 계좌 필요)
 2. Netlify → **Add new site → Import an existing project → GitHub → `stock-study`** 선택 (빌드 설정은 `netlify.toml`에 들어 있어 그대로 Deploy)
-3. **Site configuration → Environment variables**에 추가한 뒤 **Deploys → Trigger deploy**
+3. **Site configuration → Environment variables**에 추가한 뒤 **Deploys → Trigger deploy** (환경변수는 다시 배포해야 반영됨)
+4. **Project configuration → General → Visitor access**에서 **Public** 선택 (Private이면 Netlify 로그인 없이는 안 열림)
+5. `https://<사이트주소>/api/health` 를 열어 키 5개가 모두 `true`, `corpListBundled`가 0보다 큰지 확인
 
 | 이름 | 값 |
 |---|---|
@@ -24,6 +26,9 @@
 - `netlify/functions/` API: `/api/search`, `/api/stock`, `/api/disclosures`, `/api/news`
 - `lib/` DART·네이버 연동, 지표 계산, 분류 규칙(`lib/analyze.mjs`)
 - `test/` 모의 데이터 검증: `npm test`, 화면 확인: `node test/dev-server.mjs`
+
+## 종합 판단 방식
+회사 체력(ROE·이익률·성장·부채·현금흐름, 금융업은 ROE 중심) 상/중/하 × 지금 가격(PER·PBR·PEG·추정PER·52주 위치) 쌈/적정/비쌈 조합으로 "적극 검토 / 관심 유지 / 가격 대기 / 이유 확인 / 관찰 / 보수적 / 가치 함정 주의 / 회피" 중 하나를 고르고, 최근 90일 안의 유상증자·CB·감사의견 등 공시가 있으면 판단 보류를 덧붙입니다. 규칙은 `lib/analyze.mjs`의 `buildVerdict`에서 바꿀 수 있습니다.
 
 ## 참고
 - 재무는 최근 사업보고서(연결 우선) + 올해 최신 분기 누적 기준입니다.

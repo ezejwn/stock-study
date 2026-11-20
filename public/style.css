@@ -48,6 +48,29 @@ main { max-width: 1080px; margin: 0 auto; padding: 20px; min-height: 70vh; }
 .badge.dividend { color: var(--dividend); background: var(--dividend-bg); }
 .up { color: var(--up); } .down { color: var(--down); }
 
+/* 종합 판단 */
+.verdict { background: #fff; border: 1px solid var(--line); border-left: 5px solid var(--neutral); border-radius: var(--r); padding: 18px 20px; margin-bottom: 14px; }
+.verdict.good { border-left-color: var(--good); } .verdict.warn { border-left-color: var(--warn); } .verdict.bad { border-left-color: var(--bad); }
+.v-head { display: flex; align-items: baseline; gap: 10px; }
+.v-k { font-size: 13px; color: var(--sub); font-weight: 600; }
+.v-label { font-size: 22px; font-weight: 800; }
+.verdict.good .v-label { color: var(--good); } .verdict.warn .v-label { color: var(--warn); } .verdict.bad .v-label { color: var(--bad); }
+.v-text { margin: 6px 0 14px; font-size: 15px; }
+.grades { display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; margin-bottom: 14px; }
+.grade { background: var(--bg); border-radius: 10px; padding: 8px 10px; display: flex; flex-direction: column; gap: 2px; }
+.grade span { font-size: 12px; color: var(--sub); }
+.grade b { font-size: 17px; }
+.grade b.good { color: var(--good); } .grade b.bad { color: var(--bad); } .grade b.warn { color: var(--warn); }
+.v-cols { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; margin-bottom: 10px; }
+.v-cols h3 { margin: 0 0 4px; font-size: 14px; }
+.v-cols h3.c { color: var(--good); } .v-cols h3.r { color: var(--bad); }
+.v-cols ul, .v-cols ol { margin: 0; padding-left: 18px; font-size: 14px; }
+.v-cols li { padding: 2px 0; }
+.v-cols li.d { list-style: none; margin-left: -18px; color: var(--sub); }
+.v-note { margin: 4px 0 0; font-size: 12px; color: var(--sub); }
+.vlabel { margin-top: 6px; font-size: 13px; font-weight: 700; color: var(--sub); }
+.vlabel.good { color: var(--good); } .vlabel.warn { color: var(--warn); } .vlabel.bad { color: var(--bad); }
+
 /* 상세 */
 .back { display: inline-block; margin-bottom: 12px; color: var(--sub); text-decoration: none; }
 .hero { background: #fff; border: 1px solid var(--line); border-radius: var(--r); padding: 20px; margin-bottom: 14px; }
@@ -115,7 +138,8 @@ main { max-width: 1080px; margin: 0 auto; padding: 20px; min-height: 70vh; }
   .topbar { flex-direction: column; align-items: stretch; gap: 8px; padding: 10px 14px; }
   .search { max-width: none; }
   main { padding: 14px; }
-  .sections, .feeds, .cr { grid-template-columns: 1fr; }
+  .sections, .feeds, .cr, .v-cols { grid-template-columns: 1fr; }
+  .grades { grid-template-columns: 1fr 1fr; }
   .hero .meta { margin-left: 0; width: 100%; }
   .pts li { grid-template-columns: 10px 96px 1fr; }
 }
