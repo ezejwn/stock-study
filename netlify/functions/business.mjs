@@ -8,7 +8,7 @@ export default async (req) => {
     const code = (new URL(req.url).searchParams.get("code") || "").trim();
     const corp = await findCorp(code);
     if (!corp) return errorJson("종목을 찾을 수 없습니다.", 404);
-    const data = await getBusiness(corp.corp, code);
+    const data = await getBusiness(corp.corp);
     const ok = data.overview.length || data.summary || data.products.length;
     return json({ code, ...data }, { cacheSeconds: ok ? 7 * 24 * 3600 : 0 });
   } catch (e) {

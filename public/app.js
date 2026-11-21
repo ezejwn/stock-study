@@ -390,7 +390,7 @@ async function loadBusiness(code) {
     const one = b.overview[0] || (b.summary ? b.summary.split(/(?<=다\.)\s/)[0] : "");
     if (one && $("#oneLiner")) $("#oneLiner").textContent = one;
     if (!b.overview.length && !b.summary && !b.products.length && !b.productsText) {
-      const why = Object.values(b.errors || {}).join(" / ");
+      const why = Object.entries(b.errors || {}).map(([k, v]) => `${{ reportList: "공시목록", dartDocument: "DART 원문", dartViewer: "DART 뷰어" }[k] || k}: ${v}`).join(" / ");
       box().innerHTML = `<p class="d">사업 내용을 가져오지 못했어요${why ? ` (${esc(why)})` : ""}.${b.report ? ` <a href="${esc(safeUrl(b.report.url))}" target="_blank" rel="noopener">사업보고서 원문 보기</a>` : ""}</p>`;
       return;
     }
@@ -414,7 +414,7 @@ async function loadBusiness(code) {
       ${segs.map((p) => `<tr><td><i class="sw" style="background:${p.c}"></i><b>${esc(p.label)}</b></td><td class="n">${p.ratio}%</td>${hasDetail ? `<td>${esc(p.detail)}</td>` : ""}</tr>`).join("")}
       </tbody></table>` : b.productsText ? `<h3>주요 제품</h3><p class="g-desc">${esc(b.productsText)}</p>` : "";
     box().innerHTML = `${desc}${bar}
-      <p class="d g-src">출처: ${[b.overview.length ? "네이버 증권 기업개요" : "", b.report ? `<a href="${esc(safeUrl(b.report.url))}" target="_blank" rel="noopener">${esc(b.report.title)}</a> ‘사업의 내용’` : ""].filter(Boolean).join(" · ")}</p>`;
+      <p class="d g-src">출처: ${["DART", b.report ? `<a href="${esc(safeUrl(b.report.url))}" target="_blank" rel="noopener">${esc(b.report.title)}</a> ‘사업의 내용’` : ""].filter(Boolean).join(" · ")}</p>`;
   } catch (e) {
     if (box()) box().innerHTML = `<p class="d">사업 내용을 불러오지 못했어요 (${esc(e.message)})</p>`;
   }

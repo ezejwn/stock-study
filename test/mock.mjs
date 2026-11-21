@@ -171,7 +171,9 @@ globalThis.fetch = async (url, opts) => {
     return ok({ status: "000", list: p.corp_code === "00126380" ? [{ report_nm: "사업보고서 (2025.12)", rcept_no: "20260310000999", rcept_dt: "20260310" }] : [] });
   }
   if (u.pathname.endsWith("document.xml")) {
-    return new Response(zipSync({ [`${p.rcept_no}.xml`]: strToU8(REPORT_XML), [`${p.rcept_no}_00760.xml`]: strToU8("<x/>") }));
+    if (bizState.docDown) return new Response(JSON.stringify({ status: "014", message: "파일이 존재하지 않습니다." }));
+    const big = "<P>" + "재무 내용 ".repeat(200000) + "</P>";
+    return new Response(zipSync({ [`${p.rcept_no}_00760.xml`]: strToU8("<x>감사보고서</x>"), [`${p.rcept_no}.xml`]: strToU8(REPORT_XML.replace("</BODY>", `<SECTION-1><TITLE>IV. 재무 상세</TITLE>${big}</SECTION-1></BODY>`)) }));
   }
   if (u.pathname.endsWith("list.json")) return ok({ status: "000", list: DISC[p.corp_code] || [] });
   const mm = u.pathname.match(/api\/stock\/(\d{6})\/(integration|basic)/);
