@@ -13,7 +13,7 @@ export default async () => {
     .map((k) => JSON.stringify(k));
   // 키 모양 점검 (값은 숨기고 길이만)
     const shape = (n) => {
-    const names = { NAVER_CLIENT_ID: ["NAVER_CLIENT_ID", "X-NCP-APIGW-API-KEY-ID", "X_NCP_APIGW_API_KEY_ID"], NAVER_CLIENT_SECRET: ["NAVER_CLIENT_SECRET", "X-NCP-APIGW-API-KEY", "X_NCP_APIGW_API_KEY"] }[n] || [n];
+    const names = { NAVER_CLIENT_ID: ["NAVER_CLIENT_ID", "X-NCP-APIGW-API-KEY-ID", "X_NCP_APIGW_API_KEY_ID"], NAVER_CLIENT_SECRET: ["NAVER_CLIENT_SECRET", "X-NCP-APIGW-API-KEY", "X_NCP_APIGW_API_KEY", "X_NCP_APIGW_API_KEY_SECRET", "X_NCP_APIGW_API_SECRET"] }[n] || [n];
     const found = names.find((x) => process.env[x] != null);
     const raw = found ? process.env[found] : undefined;
     if (raw == null) return { 설정됨: false };
