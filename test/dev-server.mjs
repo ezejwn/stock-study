@@ -7,8 +7,9 @@ import search from "../netlify/functions/search.mjs";
 import stock from "../netlify/functions/stock.mjs";
 import disclosures from "../netlify/functions/disclosures.mjs";
 import news from "../netlify/functions/news.mjs";
+import business from "../netlify/functions/business.mjs";
 
-const routes = { "/api/search": search, "/api/stock": stock, "/api/disclosures": disclosures, "/api/news": news };
+const routes = { "/api/search": search, "/api/stock": stock, "/api/disclosures": disclosures, "/api/news": news, "/api/business": business };
 const types = { ".html": "text/html", ".js": "text/javascript", ".css": "text/css" };
 http.createServer(async (req, res) => {
   const u = new URL(req.url, "http://localhost");

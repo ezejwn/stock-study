@@ -1,5 +1,7 @@
 // 외부 API(DART·네이버)를 흉내 내는 모의 fetch — 로컬 검증용
 import { zipSync, strToU8 } from "fflate";
+import { readFileSync } from "node:fs";
+const REPORT_XML = readFileSync(new URL("./fixtures/report.xml", import.meta.url), "utf8");
 
 process.env.DART_API_KEY = "test";
 process.env.NAVER_CLIENT_ID = "id";
@@ -142,6 +144,12 @@ globalThis.fetch = async (url, opts) => {
   }
   if (u.pathname.endsWith("alotMatter.json")) return DIV[p.corp_code] ? ok({ status: "000", list: DIV[p.corp_code] }) : ok({ status: "013" });
   if (u.pathname.endsWith("hyslrSttus.json")) return HOLD[p.corp_code] ? ok({ status: "000", list: HOLD[p.corp_code] }) : ok({ status: "013" });
+  if (u.pathname.endsWith("list.json") && p.pblntf_detail_ty === "A001") {
+    return ok({ status: "000", list: p.corp_code === "00126380" ? [{ report_nm: "사업보고서 (2025.12)", rcept_no: "20260310000999", rcept_dt: "20260310" }] : [] });
+  }
+  if (u.pathname.endsWith("document.xml")) {
+    return new Response(zipSync({ [`${p.rcept_no}.xml`]: strToU8(REPORT_XML), [`${p.rcept_no}_00760.xml`]: strToU8("<x/>") }));
+  }
   if (u.pathname.endsWith("list.json")) return ok({ status: "000", list: DISC[p.corp_code] || [] });
   const mm = u.pathname.match(/api\/stock\/(\d{6})\/(integration|basic)/);
   if (mm) {

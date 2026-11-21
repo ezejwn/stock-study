@@ -1,0 +1,29 @@
+<?xml version="1.0" encoding="utf-8"?>
+<DOCUMENT><DOCUMENT-NAME>사업보고서</DOCUMENT-NAME>
+<BODY>
+<SECTION-1><TITLE ATOC="Y">I. 회사의 개요</TITLE><P>당사는 사업의 내용 항목을 참고하시기 바랍니다.</P></SECTION-1>
+<SECTION-1><TITLE ATOC="Y" AASSOCNOTE="D-0-2-0-0">II. 사업의 내용</TITLE>
+<SECTION-2><TITLE ATOC="Y">1. 사업의 개요</TITLE>
+<P>※ 본 보고서의 작성기준일은 2025년 12월 31일입니다.</P>
+<P>가. 당사는 본사를 거점으로 한국과 DX 부문 산하 해외 9개 지역총괄 및 DS 부문 산하 해외 5개 지역총괄 등 총 230개의 종속기업으로 구성된 글로벌 전자 기업입니다.</P>
+<P>나. 사업 부문은 완제품을 생산·판매하는 DX(Device eXperience) 부문과 부품을 생산·판매하는 DS(Device Solutions) 부문, 디스플레이 패널을 생산·판매하는 SDC, 전장부품 사업 등을 영위하는 Harman으로 구분됩니다.</P>
+<TABLE><TR><TD>부문</TD><TD>주요 제품</TD></TR><TR><TD>DX</TD><TD>TV, 스마트폰</TD></TR></TABLE>
+<P>다. 2025년 당사의 매출은 334조원으로 전년 대비 10.9% 증가하였습니다.</P>
+<P>라. 기타 자세한 사항은 사업보고서 각 항목을 참고하시기 바랍니다.</P>
+</SECTION-2>
+<SECTION-2><TITLE ATOC="Y">2. 주요 제품 및 서비스</TITLE>
+<P>(단위 : 억원, %)</P>
+<TABLE BORDER="1">
+<THEAD><TR><TH>부 문</TH><TH>주요 제품</TH><TH>매출액</TH><TH>비중</TH></TR></THEAD>
+<TBODY>
+<TR><TD>DX 부문</TD><TD>TV, 모니터, 냉장고, 세탁기, 에어컨, 스마트폰 등</TD><TE ALIGN="RIGHT">1,745,887</TE><TE>52.3%</TE></TR>
+<TR><TD>DS 부문</TD><TD>DRAM, NAND Flash, 모바일AP 등</TD><TE>1,309,059</TE><TE>39.2%</TE></TR>
+<TR><TD>SDC</TD><TD>스마트폰용 OLED 패널 등</TD><TE>291,578</TE><TE>8.7%</TE></TR>
+<TR><TD>Harman</TD><TD>디지털 콕핏, 카오디오 등</TD><TE>160,000</TE><TE>4.8%</TE></TR>
+<TR><TD>기타</TD><TD>부문간 내부거래 제거 등</TD><TE>-160,000</TE><TE>-5.0%</TE></TR>
+<TR><TD>합 계</TD><TD></TD><TE>3,346,524</TE><TE>100.0%</TE></TR>
+</TBODY></TABLE>
+</SECTION-2>
+<SECTION-2><TITLE ATOC="Y">3. 원재료 및 생산설비</TITLE><P>원재료는 ...</P></SECTION-2>
+</SECTION-1>
+</BODY></DOCUMENT>

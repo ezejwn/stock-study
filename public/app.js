@@ -297,6 +297,7 @@ async function renderDetail(code, fresh = false) {
 
   detailCtx = { code, name: data.name, lastSeenBefore, discCatalysts: data.catalysts, discRisks: data.risks };
   loadFeeds(code, fresh);
+  loadBusiness(code);
   clearInterval(feedTimer);
   feedTimer = setInterval(() => { if (document.visibilityState === "visible") loadFeeds(code, true); }, FEED_REFRESH_MS);
 }
@@ -326,6 +327,7 @@ function sectionHtml(sec) {
   return `<section class="sec">
     <h2><span class="no">${sec.no}</span>${esc(sec.title)}</h2>
     <p class="sum">${esc(sec.summary)}</p>
+    ${sec.key === "business" ? '<div class="biz" id="bizBox"><p class="d">사업 아이템 불러오는 중…</p></div>' : ""}
     <ul class="pts">${sec.points.map((p) => `<li><i class="dot ${p.tone}"></i><span class="lb">${esc(p.label)}</span><span class="vl">${esc(p.value)}${p.note ? `<span class="nt">${esc(p.note)}</span>` : ""}</span></li>`).join("")}</ul>
   </section>`;
 }
@@ -346,6 +348,27 @@ function catalystHtml(data, news = []) {
       <div><h3 class="r">리스크 (조심할 신호)</h3><ul>${rs.join("") || '<li class="d">해당 없음</li>'}</ul></div>
     </div>
   </section>`;
+}
+
+// 사업 아이템: 사업보고서 '사업의 내용' 요약 + 주요 제품 매출 비중
+async function loadBusiness(code) {
+  const box = () => $("#bizBox");
+  try {
+    const b = await api(`/api/business?code=${code}`);
+    if (currentCode !== code || !box()) return;
+    if (!b.summary && !b.products.length && !b.productsText) {
+      box().innerHTML = `<p class="d">사업보고서에서 사업 내용을 찾지 못했어요.${b.report ? ` <a href="${esc(safeUrl(b.report.url))}" target="_blank" rel="noopener">원문 보기</a>` : ""}</p>`;
+      return;
+    }
+    const bars = b.products.map((p) => `<li><span class="bn">${esc(p.name)}</span><span class="bb"><i style="width:${Math.min(100, p.ratio)}%"></i></span><span class="br">${p.ratio}%</span></li>`).join("");
+    box().innerHTML = `
+      <h3>무엇으로 돈을 버나</h3>
+      ${b.summary ? `<p class="bs">${esc(b.summary)}</p>` : ""}
+      ${bars ? `<p class="bh">주요 제품·사업 매출 비중</p><ul class="bars">${bars}</ul>` : b.productsText ? `<p class="bs">${esc(b.productsText)}</p>` : ""}
+      ${b.report ? `<p class="d">출처: <a href="${esc(safeUrl(b.report.url))}" target="_blank" rel="noopener">${esc(b.report.title)}</a> ‘사업의 내용’</p>` : ""}`;
+  } catch (e) {
+    if (box()) box().innerHTML = `<p class="d">사업 아이템을 불러오지 못했어요 (${esc(e.message)})</p>`;
+  }
 }
 
 async function loadFeeds(code, fresh = false) {

@@ -4,6 +4,7 @@ import search from "../netlify/functions/search.mjs";
 import stock from "../netlify/functions/stock.mjs";
 import disclosures from "../netlify/functions/disclosures.mjs";
 import news from "../netlify/functions/news.mjs";
+import business from "../netlify/functions/business.mjs";
 import assert from "node:assert/strict";
 
 const call = async (fn, path) => { const r = await fn(new Request("http://x" + path)); return { status: r.status, body: await r.json(), headers: r.headers }; };
@@ -59,6 +60,12 @@ console.log("한국투자증권 연동 검사 통과 · 경고 예:", k3.warning
 assert.equal((await call(stock, "/api/stock?code=abc")).status, 400);
 assert.equal((await call(stock, "/api/stock?code=000000")).status, 404);
 
+const biz = await call(business, "/api/business?code=005930");
+assert.equal(biz.status, 200, JSON.stringify(biz.body));
+assert.equal(biz.body.products.length, 4);
+assert.match(biz.body.report.url, /rcpNo=20260310000999/);
+assert.equal((await call(business, "/api/business?code=196170")).body.report, null, "사업보고서 없으면 빈 값");
+console.log("사업 아이템:", biz.body.products.map((p) => `${p.name} ${p.ratio}%`).join(" / "));
 const d = await call(disclosures, "/api/disclosures?code=005930&days=30");
 assert.ok(d.body.list.length && d.body.list[0].url.includes("dart.fss.or.kr"));
 const n = await call(news, "/api/news?q=삼성전자");
