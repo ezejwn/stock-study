@@ -356,16 +356,20 @@ async function loadBusiness(code) {
   try {
     const b = await api(`/api/business?code=${code}`);
     if (currentCode !== code || !box()) return;
-    if (!b.summary && !b.products.length && !b.productsText) {
-      box().innerHTML = `<p class="d">사업보고서에서 사업 내용을 찾지 못했어요.${b.report ? ` <a href="${esc(safeUrl(b.report.url))}" target="_blank" rel="noopener">원문 보기</a>` : ""}</p>`;
+    if (!b.overview.length && !b.summary && !b.products.length && !b.productsText) {
+      const why = Object.values(b.errors || {}).join(" / ");
+      box().innerHTML = `<p class="d">사업 내용을 가져오지 못했어요${why ? ` (${esc(why)})` : ""}.${b.report ? ` <a href="${esc(safeUrl(b.report.url))}" target="_blank" rel="noopener">사업보고서 원문 보기</a>` : ""}</p>`;
       return;
     }
     const bars = b.products.map((p) => `<li><span class="bn">${esc(p.name)}</span><span class="bb"><i style="width:${Math.min(100, p.ratio)}%"></i></span><span class="br">${p.ratio}%</span></li>`).join("");
+    const intro = b.overview.length
+      ? `<ul class="ov">${b.overview.map((x) => `<li>${esc(x)}</li>`).join("")}</ul>`
+      : b.summary ? `<p class="bs">${esc(b.summary)}</p>` : "";
     box().innerHTML = `
-      <h3>무엇으로 돈을 버나</h3>
-      ${b.summary ? `<p class="bs">${esc(b.summary)}</p>` : ""}
-      ${bars ? `<p class="bh">주요 제품·사업 매출 비중</p><ul class="bars">${bars}</ul>` : b.productsText ? `<p class="bs">${esc(b.productsText)}</p>` : ""}
-      ${b.report ? `<p class="d">출처: <a href="${esc(safeUrl(b.report.url))}" target="_blank" rel="noopener">${esc(b.report.title)}</a> ‘사업의 내용’</p>` : ""}`;
+      <h3>무슨 사업을 하나</h3>
+      ${intro}
+      ${bars ? `<p class="bh">주요 제품·사업별 매출 비중</p><ul class="bars">${bars}</ul>` : b.productsText ? `<p class="bh">주요 제품</p><p class="bs">${esc(b.productsText)}</p>` : ""}
+      <p class="d">출처: ${b.overview.length ? "네이버 증권 기업개요" : ""}${b.overview.length && b.report ? " · " : ""}${b.report ? `<a href="${esc(safeUrl(b.report.url))}" target="_blank" rel="noopener">${esc(b.report.title)}</a>` : ""}</p>`;
   } catch (e) {
     if (box()) box().innerHTML = `<p class="d">사업 아이템을 불러오지 못했어요 (${esc(e.message)})</p>`;
   }

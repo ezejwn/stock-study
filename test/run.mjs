@@ -1,5 +1,5 @@
 // 모의 데이터로 API 함수 전체 흐름 검증: node test/run.mjs
-import { kisState } from "./mock.mjs";
+import { kisState, bizState } from "./mock.mjs";
 import search from "../netlify/functions/search.mjs";
 import stock from "../netlify/functions/stock.mjs";
 import disclosures from "../netlify/functions/disclosures.mjs";
@@ -62,7 +62,16 @@ assert.equal((await call(stock, "/api/stock?code=000000")).status, 404);
 
 const biz = await call(business, "/api/business?code=005930");
 assert.equal(biz.status, 200, JSON.stringify(biz.body));
-assert.equal(biz.body.products.length, 4);
+assert.equal(biz.body.overview.length, 2, "네이버 기업개요");
+assert.equal(biz.body.products.length, 4, "DART 뷰어 주요 제품");
+assert.match(biz.body.summary, /^당사는/);
+assert.deepEqual(biz.body.errors, {});
+// 네이버·DART 뷰어가 모두 막혀도 원문(zip)으로 대체
+bizState.naverDown = true; bizState.viewerDown = true;
+const biz2 = (await call(business, "/api/business?code=005930&x=2")).body;
+assert.equal(biz2.products.length, 4, "원문 대체");
+assert.ok(biz2.errors.naver && biz2.errors.dartViewer, "실패 이유 기록");
+bizState.naverDown = false; bizState.viewerDown = false;
 assert.match(biz.body.report.url, /rcpNo=20260310000999/);
 assert.equal((await call(business, "/api/business?code=196170")).body.report, null, "사업보고서 없으면 빈 값");
 console.log("사업 아이템:", biz.body.products.map((p) => `${p.name} ${p.ratio}%`).join(" / "));

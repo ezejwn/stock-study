@@ -108,12 +108,35 @@ const COMPANY = {
 const ok = (body) => new Response(JSON.stringify(body), { status: 200, headers: { "content-type": "application/json" } });
 const realFetch = globalThis.fetch;
 export const calls = [];
+export const bizState = { naverDown: false, viewerDown: false };
+const sectionOf = (xml, re) => {
+  const t = [...xml.matchAll(/<TITLE[^>]*>([\s\S]*?)<\/TITLE>/gi)];
+  const i = t.findIndex((m) => re.test(m[1]));
+  return xml.slice(t[i].index, i + 1 < t.length ? t[i + 1].index : xml.length).replace(/<TITLE[\s\S]*?<\/TITLE>/, "");
+};
+const toHtml = (x) => x.replace(/<(\/?)(TE|TU)([^>]*)>/gi, "<$1td$3>").replace(/<(\/?)P>/g, "<$1p>");
 
 globalThis.fetch = async (url, opts) => {
   const u = new URL(String(url));
-  if (!/opendart|naver\.com|koreainvestment|ntruss\.com/.test(u.host)) return realFetch(url, opts);
-  calls.push(u.pathname);
+  if (!/opendart|naver\.com|koreainvestment|ntruss\.com|dart\.fss\.or\.kr/.test(u.host)) return realFetch(url, opts);
   const p = Object.fromEntries(u.searchParams);
+  if (u.host === "finance.naver.com") {
+    if (bizState.naverDown) return new Response("err", { status: 503 });
+    const body = p.code === "005930" ? `<p>한국 및 DX부문 해외 9개 지역총괄로 구성된 글로벌 전자기업임.</p><p>세트사업(DX)에는 TV, 냉장고, 스마트폰 등이 있고, 부품사업(DS)에는 DRAM, NAND, 파운드리 등이 있음.</p>` : "";
+    return new Response(`<html><head><meta charset="utf-8"></head><body><div class="summary_info" id="summary_info"><h4>기업개요</h4>${body}</div></body></html>`, { headers: { "content-type": "text/html" } });
+  }
+  if (u.host === "dart.fss.or.kr") {
+    if (bizState.viewerDown) return new Response("err", { status: 500 });
+    if (u.pathname === "/dsaf001/main.do") {
+      const n = (i, text, ele) => `node${i} = {};\nnode${i}['text'] = "${text}";\nnode${i}['rcpNo'] = "${p.rcpNo}";\nnode${i}['dcmNo'] = "777";\nnode${i}['eleId'] = "${ele}";\nnode${i}['offset'] = "1";\nnode${i}['length'] = "2";\nnode${i}['dtd'] = "dart4.xsd";\n`;
+      return new Response(`<script>${n(1, "II. 사업의 내용", "10")}${n(2, "1. 사업의 개요", "11")}${n(3, "2. 주요 제품 및 서비스", "12")}</script>`);
+    }
+    if (u.pathname === "/report/viewer.do") {
+      const sec = p.eleId === "11" ? sectionOf(REPORT_XML, /사업의 개요/) : p.eleId === "12" ? sectionOf(REPORT_XML, /주요 제품/) : REPORT_XML;
+      return new Response(`<html><head><meta charset="utf-8"></head><body>${toHtml(sec)}</body></html>`);
+    }
+  }
+  calls.push(u.pathname);
   if (u.host.includes("koreainvestment")) {
     if (u.pathname === "/oauth2/tokenP") {
       const b = JSON.parse(opts.body);

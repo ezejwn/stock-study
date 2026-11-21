@@ -8,8 +8,9 @@ export default async (req) => {
     const code = (new URL(req.url).searchParams.get("code") || "").trim();
     const corp = await findCorp(code);
     if (!corp) return errorJson("종목을 찾을 수 없습니다.", 404);
-    const data = await getBusiness(corp.corp);
-    return json({ code, ...data }, { cacheSeconds: 7 * 24 * 3600 });
+    const data = await getBusiness(corp.corp, code);
+    const ok = data.overview.length || data.summary || data.products.length;
+    return json({ code, ...data }, { cacheSeconds: ok ? 7 * 24 * 3600 : 0 });
   } catch (e) {
     return errorJson(e.name === "AbortError" ? "DART 원문이 커서 시간 안에 받지 못했습니다. 잠시 후 다시 시도하세요." : e.message, e.status || 500);
   }

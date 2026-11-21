@@ -52,6 +52,8 @@ main { max-width: 1080px; margin: 0 auto; padding: 20px; min-height: 70vh; }
 .biz { background: var(--bg); border-radius: 10px; padding: 12px 14px; margin: 0 0 10px; }
 .biz h3 { margin: 0 0 4px; font-size: 14px; }
 .biz .bs { margin: 0 0 8px; font-size: 13.5px; line-height: 1.6; }
+.biz .ov { margin: 0 0 8px; padding-left: 18px; font-size: 13.5px; line-height: 1.6; }
+.biz .ov li { padding: 1px 0; }
 .biz .bh { margin: 6px 0 4px; font-size: 12px; color: var(--sub); font-weight: 600; }
 .biz .d { margin: 6px 0 0; color: var(--sub); font-size: 12px; }
 .biz .d a { color: var(--sub); }
