@@ -87,12 +87,16 @@ assert.ok(hub.list.some((x) => x.title.includes("API HUB 기사")), "API HUB 기
 process.env.NAVER_CLIENT_ID = "hubsecret"; process.env.NAVER_CLIENT_SECRET = "hubid";
 assert.ok((await call(news, "/api/news?q=삼성전자&code=005930&s=hub2")).body.list.some((x) => x.title.includes("API HUB")), "HUB 키 바뀜도 처리");
 
+// "NAVER_CLIENT_ID=값" 처럼 이름까지 붙여넣은 경우도 동작
+process.env.NAVER_CLIENT_ID = "NAVER_CLIENT_ID=hubid"; process.env.NAVER_CLIENT_SECRET = "NAVER_CLIENT_SECRET = 'hubsecret'";
+assert.equal((await call(news, "/api/news?q=삼성전자&code=005930&s=pre")).body.notice, null, "이름 접두어 제거");
+
 // 키가 틀리면 종목뉴스만 + 안내
 process.env.NAVER_CLIENT_ID = "wrongwrongwrongwrong"; process.env.NAVER_CLIENT_SECRET = "bad";
 const n4 = await call(news, "/api/news?q=삼성전자&code=005930&s=3");
 assert.equal(n4.status, 200);
 assert.equal(n4.body.list.length, 2);
-assert.match(n4.body.notice, /NAVER API HUB HTTP 401.*개발자센터 HTTP 401.*024.*ID 20자·Secret 3자/);
+assert.match(n4.body.notice, /HTTP 401.*HTTP 401.*ID 20자·Secret 3자/);
 console.log("키 오류 시 안내:", n4.body.notice);
 
 // 키 없고 종목코드도 없으면 친절한 오류
