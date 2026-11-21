@@ -48,6 +48,35 @@ main { max-width: 1080px; margin: 0 auto; padding: 20px; min-height: 70vh; }
 .badge.dividend { color: var(--dividend); background: var(--dividend-bg); }
 .up { color: var(--up); } .down { color: var(--down); }
 
+/* 한눈에 보기 */
+.kicker { font-size: 13px; color: var(--sub); margin-bottom: 2px; }
+.oneliner { margin: 8px 0 0; font-size: 16px; font-weight: 600; color: #1f2937; line-height: 1.5; }
+.oneliner:empty { display: none; }
+.glance { background: #fff; border: 1px solid var(--line); border-left: 5px solid #0f7b8a; border-radius: var(--r); padding: 18px 20px; margin-bottom: 14px;
+  background-image: linear-gradient(90deg, #e3f2f4, #fff 55%); }
+.glance h2 { margin: 0 0 10px; font-size: 18px; }
+.glance h3 { margin: 14px 0 6px; font-size: 15px; }
+.g-sub { font-size: 13px; font-weight: 500; color: var(--sub); margin-left: 6px; }
+.g-desc { margin: 0; padding-left: 18px; font-size: 14.5px; line-height: 1.65; }
+p.g-desc { padding-left: 0; }
+.segbar { display: flex; height: 34px; border-radius: 8px; overflow: hidden; margin: 6px 0 8px; }
+.segbar div { display: flex; align-items: center; justify-content: center; color: #fff; font-size: 12.5px; font-weight: 700; white-space: nowrap; overflow: hidden; }
+.segtbl { width: 100%; border-collapse: collapse; font-size: 13.5px; background: #fff; border-radius: 8px; overflow: hidden; }
+.segtbl th.n { text-align: right; }
+.segtbl th { text-align: left; font-size: 12px; color: var(--sub); font-weight: 600; padding: 6px 8px; border-bottom: 1px solid var(--line); }
+.segtbl td { padding: 7px 8px; border-bottom: 1px solid #f1f2f4; vertical-align: top; }
+.segtbl .n { text-align: right; font-variant-numeric: tabular-nums; font-weight: 700; white-space: nowrap; }
+.sw { display: inline-block; width: 10px; height: 10px; border-radius: 3px; margin-right: 6px; vertical-align: 0; }
+.glance .g-src { margin-top: 8px; }
+.glance .d { color: var(--sub); font-size: 12px; }
+.glance .d a { color: var(--sub); }
+.tiles { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 10px; margin-top: 14px; }
+.tile { background: #fff; border: 1px solid var(--line); border-radius: 10px; padding: 10px 12px; }
+.tile .k { font-size: 12px; color: var(--sub); }
+.tile .v { font-size: 19px; font-weight: 800; font-variant-numeric: tabular-nums; letter-spacing: -.01em; }
+.tile .s { font-size: 12px; color: #4b5563; }
+.neg { color: var(--bad); }
+
 /* 사업 아이템 */
 .biz { background: var(--bg); border-radius: 10px; padding: 12px 14px; margin: 0 0 10px; }
 .biz h3 { margin: 0 0 4px; font-size: 14px; }

@@ -238,11 +238,13 @@ async function renderDetail(code, fresh = false) {
     <a class="back" href="#/">← 목록</a>
     ${data.warnings?.length ? `<div class="warn-box">${data.warnings.map(esc).join("<br>")}</div>` : ""}
     <section class="hero">
+      <div class="kicker">${esc([data.glance?.market, code, data.glance?.sector].filter(Boolean).join(" · "))}</div>
       <div class="hero-top">
         <h1>${esc(data.name)}</h1><span class="cd">${code}</span>
         <span class="price">${esc(s.priceText || "")}</span>
         <span class="meta">분석 ${clock(data.updatedAt)} <button class="btn" id="reload">새로고침</button></span>
       </div>
+      <p class="oneliner" id="oneLiner"></p>
       <div class="cat-row">
         <span class="badge ${c}">${CAT[c]}</span>
         <select id="override" aria-label="분류 직접 지정">
@@ -252,6 +254,7 @@ async function renderDetail(code, fresh = false) {
         ${data.category.reasons.map((r) => `<span class="chip">${esc(r)}</span>`).join("")}
       </div>
     </section>
+    ${glanceHtml(data.glance)}
     ${verdictHtml(data.verdict, catOf(s))}
     <div class="legend"><span><i class="dot good"></i>양호</span><span><i class="dot warn"></i>체크</span><span><i class="dot bad"></i>주의</span><span><i class="dot"></i>참고</span></div>
     <div class="sections">
@@ -303,6 +306,34 @@ async function renderDetail(code, fresh = false) {
 }
 let detailCtx = null;
 
+// ---------- 한눈에 보기 ----------
+const SEG_COLORS = ["#16325c", "#0f7b8a", "#d27a12", "#6b4fbb", "#3b8f4c", "#b3405a", "#8a8f98"];
+function won(n) {
+  if (n == null || !Number.isFinite(n)) return "-";
+  const eok = n / 1e8, a = Math.abs(eok), sign = eok < 0 ? "-" : "";
+  return a >= 10000 ? `${sign}${(a / 10000).toFixed(a >= 100000 ? 0 : 1)}조` : `${sign}${Math.round(a).toLocaleString("ko-KR")}억`;
+}
+const eokFmt = (e) => (e == null ? "-" : won(e * 1e8));
+const pctFmt = (v, d = 1, sign = false) => (v == null || !Number.isFinite(v) ? "-" : `${sign && v > 0 ? "+" : ""}${v.toFixed(d)}%`);
+function glanceHtml(g) {
+  if (!g) return "";
+  const neg = (v) => (v != null && v < 0 ? ' class="neg"' : "");
+  const q = g.quarter;
+  const tiles = [
+    [`${g.year || ""} 매출`, won(g.revenue), g.revGrowth != null ? `전년 대비 ${pctFmt(g.revGrowth, 1, true)}` : ""],
+    [`${g.year || ""} 영업이익`, `<span${neg(g.opIncome)}>${won(g.opIncome)}</span>`, g.opMargin != null ? `영업이익률 ${pctFmt(g.opMargin)}` : ""],
+    q && [`${q.label}`, `매출 ${pctFmt(q.revYoy, 1, true)}`, `영업이익 ${q.turn || pctFmt(q.opYoy, 1, true)} (전년 동기 대비)`],
+    ["시가총액", eokFmt(g.marketCapEok), g.market || ""],
+    ["PER / PBR (배)", `${g.per != null ? g.per.toFixed(1) : "-"} / ${g.pbr != null ? g.pbr.toFixed(2) : "-"}`, g.roe != null ? `ROE ${pctFmt(g.roe)}` : ""],
+    ["배당수익률", pctFmt(g.dividendYield, 2), g.debtRatio != null ? `부채비율 ${pctFmt(g.debtRatio, 0)}` : ""],
+  ].filter(Boolean);
+  return `<section class="glance">
+    <h2>한눈에 보기 <span class="g-sub">이 회사는 뭐하는 곳?</span></h2>
+    <div id="gBiz"><p class="d">사업 내용을 불러오는 중…</p></div>
+    <div class="tiles">${tiles.map(([k, v, sub]) => `<div class="tile"><div class="k">${esc(k)}</div><div class="v">${v}</div><div class="s">${esc(sub)}</div></div>`).join("")}</div>
+  </section>`;
+}
+
 const GRADE_TONE = { 상: "good", 중: "neutral", 하: "bad", 쌈: "good", 적정: "neutral", 비쌈: "bad", 양호: "good", 체크: "warn", 주의: "bad" };
 function verdictHtml(v, cat) {
   if (!v) return "";
@@ -327,7 +358,7 @@ function sectionHtml(sec) {
   return `<section class="sec">
     <h2><span class="no">${sec.no}</span>${esc(sec.title)}</h2>
     <p class="sum">${esc(sec.summary)}</p>
-    ${sec.key === "business" ? '<div class="biz" id="bizBox"><p class="d">사업 아이템 불러오는 중…</p></div>' : ""}
+
     <ul class="pts">${sec.points.map((p) => `<li><i class="dot ${p.tone}"></i><span class="lb">${esc(p.label)}</span><span class="vl">${esc(p.value)}${p.note ? `<span class="nt">${esc(p.note)}</span>` : ""}</span></li>`).join("")}</ul>
   </section>`;
 }
@@ -352,26 +383,40 @@ function catalystHtml(data, news = []) {
 
 // 사업 아이템: 사업보고서 '사업의 내용' 요약 + 주요 제품 매출 비중
 async function loadBusiness(code) {
-  const box = () => $("#bizBox");
+  const box = () => $("#gBiz");
   try {
     const b = await api(`/api/business?code=${code}`);
     if (currentCode !== code || !box()) return;
+    const one = b.overview[0] || (b.summary ? b.summary.split(/(?<=다\.)\s/)[0] : "");
+    if (one && $("#oneLiner")) $("#oneLiner").textContent = one;
     if (!b.overview.length && !b.summary && !b.products.length && !b.productsText) {
       const why = Object.values(b.errors || {}).join(" / ");
       box().innerHTML = `<p class="d">사업 내용을 가져오지 못했어요${why ? ` (${esc(why)})` : ""}.${b.report ? ` <a href="${esc(safeUrl(b.report.url))}" target="_blank" rel="noopener">사업보고서 원문 보기</a>` : ""}</p>`;
       return;
     }
-    const bars = b.products.map((p) => `<li><span class="bn">${esc(p.name)}</span><span class="bb"><i style="width:${Math.min(100, p.ratio)}%"></i></span><span class="br">${p.ratio}%</span></li>`).join("");
-    const intro = b.overview.length
-      ? `<ul class="ov">${b.overview.map((x) => `<li>${esc(x)}</li>`).join("")}</ul>`
-      : b.summary ? `<p class="bs">${esc(b.summary)}</p>` : "";
-    box().innerHTML = `
-      <h3>무슨 사업을 하나</h3>
-      ${intro}
-      ${bars ? `<p class="bh">주요 제품·사업별 매출 비중</p><ul class="bars">${bars}</ul>` : b.productsText ? `<p class="bh">주요 제품</p><p class="bs">${esc(b.productsText)}</p>` : ""}
-      <p class="d">출처: ${b.overview.length ? "네이버 증권 기업개요" : ""}${b.overview.length && b.report ? " · " : ""}${b.report ? `<a href="${esc(safeUrl(b.report.url))}" target="_blank" rel="noopener">${esc(b.report.title)}</a>` : ""}</p>`;
+    // 한 줄 정의는 회사명 아래에 이미 보이므로 나머지 문장만 목록으로
+    const restLines = b.overview.length ? b.overview.slice(1) : (b.summary ? b.summary.split(/(?<=다\.)\s/).slice(1) : []);
+    const desc = restLines.length ? `<ul class="g-desc">${restLines.map((x) => `<li>${esc(x)}</li>`).join("")}</ul>` : "";
+    const P = b.products;
+    const total = P.reduce((a, p) => a + p.ratio, 0);
+    const segs = P.map((p, i) => {
+      // "DX 부문 · TV, 모니터 …" → 사업: DX 부문 / 주요 제품: TV, 모니터 …
+      const [head, ...tail] = p.name.split(" · ");
+      const label = tail.length ? head : p.name;
+      const detail = [tail.join(" · "), p.use].filter(Boolean).join(" — ");
+      return { ...p, label, detail, w: total > 100 ? (p.ratio / total) * 100 : p.ratio, c: SEG_COLORS[i % SEG_COLORS.length] };
+    });
+    const hasDetail = segs.some((p) => p.detail);
+    const rest = total < 99 && total > 0 ? 100 - total : 0;
+    const bar = P.length ? `<h3>무엇으로 돈을 버나 <span class="g-sub">매출 비중</span></h3>
+      <div class="segbar">${segs.map((p) => `<div style="width:${p.w}%;background:${p.c}" title="${esc(p.name)} ${p.ratio}%">${p.w >= 14 ? esc(p.label) + " " : ""}${p.w >= 6 ? p.ratio + "%" : ""}</div>`).join("")}${rest ? `<div style="width:${rest}%;background:#d1d5db"></div>` : ""}</div>
+      <table class="segtbl"><thead><tr><th>사업·제품</th><th class="n">비중</th>${hasDetail ? "<th>주요 제품·쓰이는 곳</th>" : ""}</tr></thead><tbody>
+      ${segs.map((p) => `<tr><td><i class="sw" style="background:${p.c}"></i><b>${esc(p.label)}</b></td><td class="n">${p.ratio}%</td>${hasDetail ? `<td>${esc(p.detail)}</td>` : ""}</tr>`).join("")}
+      </tbody></table>` : b.productsText ? `<h3>주요 제품</h3><p class="g-desc">${esc(b.productsText)}</p>` : "";
+    box().innerHTML = `${desc}${bar}
+      <p class="d g-src">출처: ${[b.overview.length ? "네이버 증권 기업개요" : "", b.report ? `<a href="${esc(safeUrl(b.report.url))}" target="_blank" rel="noopener">${esc(b.report.title)}</a> ‘사업의 내용’` : ""].filter(Boolean).join(" · ")}</p>`;
   } catch (e) {
-    if (box()) box().innerHTML = `<p class="d">사업 아이템을 불러오지 못했어요 (${esc(e.message)})</p>`;
+    if (box()) box().innerHTML = `<p class="d">사업 내용을 불러오지 못했어요 (${esc(e.message)})</p>`;
   }
 }
 
