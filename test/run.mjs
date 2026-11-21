@@ -91,6 +91,12 @@ assert.ok((await call(news, "/api/news?q=삼성전자&code=005930&s=hub2")).body
 process.env.NAVER_CLIENT_ID = "NAVER_CLIENT_ID=hubid"; process.env.NAVER_CLIENT_SECRET = "NAVER_CLIENT_SECRET = 'hubsecret'";
 assert.equal((await call(news, "/api/news?q=삼성전자&code=005930&s=pre")).body.notice, null, "이름 접두어 제거");
 
+// API HUB 헤더 이름을 변수 이름으로 쓴 경우
+delete process.env.NAVER_CLIENT_ID; delete process.env.NAVER_CLIENT_SECRET;
+process.env["X-NCP-APIGW-API-KEY-ID"] = "hubid"; process.env["X-NCP-APIGW-API-KEY"] = "hubsecret";
+assert.equal((await call(news, "/api/news?q=삼성전자&code=005930&s=hdr")).body.notice, null, "헤더 이름 변수 인식");
+delete process.env["X-NCP-APIGW-API-KEY-ID"]; delete process.env["X-NCP-APIGW-API-KEY"];
+
 // 키가 틀리면 종목뉴스만 + 안내
 process.env.NAVER_CLIENT_ID = "wrongwrongwrongwrong"; process.env.NAVER_CLIENT_SECRET = "bad";
 const n4 = await call(news, "/api/news?q=삼성전자&code=005930&s=3");

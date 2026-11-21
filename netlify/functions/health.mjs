@@ -9,13 +9,15 @@ export default async () => {
   const env = Object.fromEntries(NAMES.map((n) => [n, !!getEnv(n)]));
   // 이름이 비슷한 변수(오타·공백 진단용) — 값은 절대 표시하지 않음
   const similar = Object.keys(process.env)
-    .filter((k) => /naver|kis|dart|client|app_?key|secret/i.test(k) && !NAMES.includes(k))
+    .filter((k) => /naver|kis|dart|client|app_?key|secret|ncp|apigw/i.test(k) && !NAMES.includes(k))
     .map((k) => JSON.stringify(k));
   // 키 모양 점검 (값은 숨기고 길이만)
     const shape = (n) => {
-    const raw = process.env[n];
+    const names = { NAVER_CLIENT_ID: ["NAVER_CLIENT_ID", "X-NCP-APIGW-API-KEY-ID", "X_NCP_APIGW_API_KEY_ID"], NAVER_CLIENT_SECRET: ["NAVER_CLIENT_SECRET", "X-NCP-APIGW-API-KEY", "X_NCP_APIGW_API_KEY"] }[n] || [n];
+    const found = names.find((x) => process.env[x] != null);
+    const raw = found ? process.env[found] : undefined;
     if (raw == null) return { 설정됨: false };
-    return { 설정됨: true, 원래길이: String(raw).length, 정리후길이: cleanKey(raw).length,
+    return { 설정됨: true, 변수이름: found, 원래길이: String(raw).length, 정리후길이: cleanKey(raw).length,
       앞뒤공백_줄바꿈: /^\s|\s$/.test(raw), 따옴표: /["'`]/.test(raw), 이름접두어포함: /^\s*[A-Za-z_]+\s*[=:]/.test(raw) };
   };
   const naverKeyLength = { NAVER_CLIENT_ID: shape("NAVER_CLIENT_ID"), NAVER_CLIENT_SECRET: shape("NAVER_CLIENT_SECRET"),
