@@ -10,7 +10,10 @@ export default async () => {
   const similar = Object.keys(process.env)
     .filter((k) => /naver|kis|dart|client|app_?key|secret/i.test(k) && !NAMES.includes(k))
     .map((k) => JSON.stringify(k));
-  return json({ env, similarNames: similar, corpListBundled: bundledCorps.length, time: new Date().toISOString() });
+  // 키 모양 점검 (값은 숨기고 길이만)
+  const len = (n) => (getEnv(n) || "").length;
+  const naverKeyLength = { NAVER_CLIENT_ID: len("NAVER_CLIENT_ID"), NAVER_CLIENT_SECRET: len("NAVER_CLIENT_SECRET"), expected: "보통 ID 20자 · Secret 10자" };
+  return json({ env, naverKeyLength, similarNames: similar, corpListBundled: bundledCorps.length, time: new Date().toISOString() });
 };
 
 export const config = { path: "/api/health" };

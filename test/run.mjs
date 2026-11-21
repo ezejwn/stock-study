@@ -66,8 +66,31 @@ console.log("\n뉴스:", n.body.list.map((x) => `${x.title} [${x.tag?.keyword ||
 assert.ok(n.body.list[0].title.includes('"어닝 서프라이즈"'));
 assert.ok(!n.body.list.some((x) => x.title.includes("<script>")), "태그 제거");
 
-// 키 누락 시 친절한 오류
+// 종목코드를 주면 네이버 증권 종목뉴스도 합쳐짐
+const n3 = await call(news, "/api/news?q=삼성전자&code=005930");
+assert.ok(n3.body.list.some((x) => x.url === "https://n.news.naver.com/mnews/article/015/0005000001" && x.office === "한국경제"));
+assert.equal(n3.body.notice, null);
+
+// ID·Secret을 바꿔 넣어도 자동으로 동작
+process.env.NAVER_CLIENT_ID = "secret"; process.env.NAVER_CLIENT_SECRET = "id";
+assert.equal((await call(news, "/api/news?q=삼성전자&code=005930&s=1")).body.notice, null, "서로 바뀐 키 자동 처리");
+
+// 키에 따옴표·공백·보이지 않는 문자가 섞여도 동작
+process.env.NAVER_CLIENT_ID = ' "id"\u200B\n'; process.env.NAVER_CLIENT_SECRET = " secret ";
+assert.equal((await call(news, "/api/news?q=삼성전자&code=005930&s=2")).body.notice, null, "공백·따옴표 제거");
+
+// 키가 틀리면 종목뉴스만 + 안내
+process.env.NAVER_CLIENT_ID = "wrongwrongwrongwrong"; process.env.NAVER_CLIENT_SECRET = "bad";
+const n4 = await call(news, "/api/news?q=삼성전자&code=005930&s=3");
+assert.equal(n4.status, 200);
+assert.equal(n4.body.list.length, 2);
+assert.match(n4.body.notice, /ID 20자·Secret 3자.*024/);
+console.log("키 오류 시 안내:", n4.body.notice);
+
+// 키 없고 종목코드도 없으면 친절한 오류
 delete process.env.NAVER_CLIENT_ID;
 const n2 = await call(news, "/api/news?q=x");
-assert.equal(n2.status, 500); assert.match(n2.body.error, /NAVER_CLIENT_ID/);
+assert.equal(n2.status, 502); assert.match(n2.body.error, /NAVER_CLIENT_ID/);
+// 키 없어도 종목코드만 있으면 뉴스 나옴
+assert.equal((await call(news, "/api/news?q=x&code=005930")).body.list.length, 2);
 console.log("\n모든 검사 통과");

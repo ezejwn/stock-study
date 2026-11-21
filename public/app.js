@@ -364,11 +364,12 @@ async function loadFeeds(code, fresh = false) {
     if (s) { const mx = maxRcept(d.list); if (mx > (s.lastSeen || "")) s.lastSeen = mx; s.newCount = 0; save(); }
   }).catch((e) => { const el = $("#discList"); if (el) el.innerHTML = `<li class="err">${esc(e.message)}</li>`; });
   // 뉴스
-  api(`/api/news?q=${encodeURIComponent(ctx.name)}${bust}`).then((d) => {
+  api(`/api/news?q=${encodeURIComponent(ctx.name)}&code=${code}${bust}`).then((d) => {
     if (currentCode !== code) return;
     $("#newsList").innerHTML = d.list.length ? d.list.map((x) => `<li>
       <a href="${esc(safeUrl(x.url))}" target="_blank" rel="noopener">${esc(x.title)}</a>${x.tag ? `<span class="kw ${x.tag.type}">#${esc(x.tag.keyword)}</span>` : ""}
-      <div class="d">${ago(x.date)}${x.naver ? " · 네이버뉴스" : ""}</div></li>`).join("") : '<li class="d">뉴스 없음</li>';
+      <div class="d">${ago(x.date)}${x.office ? ` · ${esc(x.office)}` : ""}${x.naver ? " · 네이버뉴스" : ""}</div></li>`).join("") : '<li class="d">뉴스 없음</li>';
+    if (d.notice) $("#newsList").insertAdjacentHTML("afterbegin", `<li class="d">${esc(d.notice)}</li>`);
     $("#newsTime").textContent = `${clock(d.updatedAt)} 기준 · 5분마다 갱신`;
     const sec = $("#secCatalyst");
     if (sec) sec.outerHTML = catalystHtml({ sections: [{ key: "catalyst", summary: `최근 1년 공시 기준 촉매 ${ctx.discCatalysts.length}건 · 리스크 ${ctx.discRisks.length}건` }], catalysts: ctx.discCatalysts, risks: ctx.discRisks }, d.list);

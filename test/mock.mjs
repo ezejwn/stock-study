@@ -155,7 +155,18 @@ globalThis.fetch = async (url, opts) => {
       { code: "dividendYieldRatio", key: "배당수익률", value: d.dividendYieldRatio }, { code: "dividend", key: "주당배당금", value: d.dividend },
     ] });
   }
+  const sn = u.pathname.match(/api\/news\/stock\/(\d{6})/);
+  if (sn) {
+    return ok([{ total: 2, items: [
+      { id: "1", officeId: "015", articleId: "0005000001", officeName: "한국경제", datetime: "202611201530", title: "종목 단독 수주 소식", titleFull: "삼성전자, 대형 공급계약 수주", body: "본문 <b>요약</b>" },
+      { id: "2", officeId: "009", articleId: "0005400002", officeName: "매일경제", datetime: "202611191010", title: "유상증자 검토설", body: "" },
+    ] }]);
+  }
   if (u.pathname.endsWith("news.json")) {
+    const h = opts?.headers || {};
+    if (h["X-Naver-Client-Id"] !== "id" || h["X-Naver-Client-Secret"] !== "secret") {
+      return new Response(JSON.stringify({ errorMessage: "NID AUTH Result Invalid (1000) : Authentication failed. (인증에 실패했습니다.)", errorCode: "024" }), { status: 401 });
+    }
     const q = p.query;
     const now = Date.now();
     return ok({ items: [
