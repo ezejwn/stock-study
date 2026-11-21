@@ -79,12 +79,20 @@ assert.equal((await call(news, "/api/news?q=삼성전자&code=005930&s=1")).body
 process.env.NAVER_CLIENT_ID = ' "id"\u200B\n'; process.env.NAVER_CLIENT_SECRET = " secret ";
 assert.equal((await call(news, "/api/news?q=삼성전자&code=005930&s=2")).body.notice, null, "공백·따옴표 제거");
 
+// NAVER API HUB 키도 동작
+process.env.NAVER_CLIENT_ID = "hubid"; process.env.NAVER_CLIENT_SECRET = "hubsecret";
+const hub = (await call(news, "/api/news?q=삼성전자&code=005930&s=hub")).body;
+assert.equal(hub.notice, null);
+assert.ok(hub.list.some((x) => x.title.includes("API HUB 기사")), "API HUB 기사 포함");
+process.env.NAVER_CLIENT_ID = "hubsecret"; process.env.NAVER_CLIENT_SECRET = "hubid";
+assert.ok((await call(news, "/api/news?q=삼성전자&code=005930&s=hub2")).body.list.some((x) => x.title.includes("API HUB")), "HUB 키 바뀜도 처리");
+
 // 키가 틀리면 종목뉴스만 + 안내
 process.env.NAVER_CLIENT_ID = "wrongwrongwrongwrong"; process.env.NAVER_CLIENT_SECRET = "bad";
 const n4 = await call(news, "/api/news?q=삼성전자&code=005930&s=3");
 assert.equal(n4.status, 200);
 assert.equal(n4.body.list.length, 2);
-assert.match(n4.body.notice, /ID 20자·Secret 3자.*024/);
+assert.match(n4.body.notice, /NAVER API HUB HTTP 401.*개발자센터 HTTP 401.*024.*ID 20자·Secret 3자/);
 console.log("키 오류 시 안내:", n4.body.notice);
 
 // 키 없고 종목코드도 없으면 친절한 오류

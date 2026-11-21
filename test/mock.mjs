@@ -109,7 +109,7 @@ export const calls = [];
 
 globalThis.fetch = async (url, opts) => {
   const u = new URL(String(url));
-  if (!/opendart|naver\.com|koreainvestment/.test(u.host)) return realFetch(url, opts);
+  if (!/opendart|naver\.com|koreainvestment|ntruss\.com/.test(u.host)) return realFetch(url, opts);
   calls.push(u.pathname);
   const p = Object.fromEntries(u.searchParams);
   if (u.host.includes("koreainvestment")) {
@@ -161,6 +161,14 @@ globalThis.fetch = async (url, opts) => {
       { id: "1", officeId: "015", articleId: "0005000001", officeName: "한국경제", datetime: "202611201530", title: "종목 단독 수주 소식", titleFull: "삼성전자, 대형 공급계약 수주", body: "본문 <b>요약</b>" },
       { id: "2", officeId: "009", articleId: "0005400002", officeName: "매일경제", datetime: "202611191010", title: "유상증자 검토설", body: "" },
     ] }]);
+  }
+  if (u.host === "naverapihub.apigw.ntruss.com") {
+    const h = opts?.headers || {};
+    if (u.pathname !== "/search/v1/news" || p.format !== "json") return new Response("{}", { status: 404 });
+    if (h["X-NCP-APIGW-API-KEY-ID"] !== "hubid" || h["X-NCP-APIGW-API-KEY"] !== "hubsecret") {
+      return new Response(JSON.stringify({ error: { errorCode: "200", message: "Authentication Failed" } }), { status: 401 });
+    }
+    return ok({ items: [{ title: `<b>${p.query}</b> API HUB 기사 수주`, link: "https://n.news.naver.com/mnews/article/011/0000000099", originallink: "https://e.com/99", description: "", pubDate: new Date().toUTCString() }] });
   }
   if (u.pathname.endsWith("news.json")) {
     const h = opts?.headers || {};

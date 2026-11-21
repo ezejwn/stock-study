@@ -6,7 +6,7 @@
 
 1. **API 키 2종 발급**
    - DART: https://opendart.fss.or.kr → 인증키 신청 (무료)
-   - 네이버: https://developers.naver.com → Application 등록 → 사용 API에서 **검색** 선택 → Client ID / Client Secret 확인
+   - 네이버(선택): **NAVER API HUB**(네이버 클라우드) 또는 https://developers.naver.com 의 검색 API Client ID / Client Secret — 둘 다 자동 인식. 없어도 네이버 증권 종목뉴스는 나옴
    - 한국투자증권(선택): https://apiportal.koreainvestment.com → KIS Developers 서비스 신청 → **실전투자** App Key / App Secret 확인 (한국투자증권 계좌 필요)
 2. Netlify → **Add new site → Import an existing project → GitHub → `stock-study`** 선택 (빌드 설정은 `netlify.toml`에 들어 있어 그대로 Deploy)
 3. **Site configuration → Environment variables**에 추가한 뒤 **Deploys → Trigger deploy** (환경변수는 다시 배포해야 반영됨)
